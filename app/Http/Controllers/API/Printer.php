@@ -322,7 +322,7 @@ class Printer extends Controller
         }
     }
 
-    public function print_with_printnode(Request $request, $function = false, $kot_update = false)
+    public function     print_with_printnode(Request $request, $function = false, $kot_update = false)
     {
         try {
 
