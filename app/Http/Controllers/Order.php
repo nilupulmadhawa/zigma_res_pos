@@ -109,7 +109,12 @@ class Order extends Controller
         $data['enable_customer_detail_popup'] = ($store_data->enable_customer_popup == 0) ? false : true;
         $data['enable_vairants_popup'] = ($store_data->enable_variants_popup == 0) ? false : true;
 
-        $categories = CategoryModel::select('slack', 'category_code', 'label')->showPosScreen()->sortLabelAsc()->get();
+        $categories = CategoryModel::select('slack', 'category_code', 'label')->showPosScreen()->sortLabelAsc()->get()->toArray();
+        array_unshift($categories, [
+            'slack' => '',
+            'category_code' => '',
+            'label' => 'All Categories'
+        ]);
         $data['categories'] = (!empty($categories)) ? $categories : [];
 
         $payment_methods = PaymentMethodModel::select('slack', 'label')
@@ -377,7 +382,7 @@ class Order extends Controller
                 break;
         }
         $setting_app = SettingAppModel::select('*')->first();
-        $print_data = view($view_file, ['data' => json_encode($order_data), 'logo_path' => $print_logo_path, "setting_app"=> $setting_app])->render();
+        $print_data = view($view_file, ['data' => json_encode($order_data), 'logo_path' => $print_logo_path, "setting_app" => $setting_app])->render();
 
         $mpdf_config = [
             'mode'          => 'utf-8',

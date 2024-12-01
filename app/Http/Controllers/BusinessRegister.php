@@ -11,6 +11,7 @@ use App\Models\BillingCounter as BillingCounterModel;
 use App\Models\PaymentMethod as PaymentMethodModel;
 use App\Models\Order as OrderModel;
 use App\Models\Store as StoreModel;
+use App\Models\OrderProduct as OrderProductModel;
 
 use App\Http\Resources\BusinessRegisterResource;
 
@@ -24,17 +25,19 @@ use Carbon\Carbon;
 class BusinessRegister extends Controller
 {
     //This is the function that loads the listing page
-    public function index(Request $request){
+    public function index(Request $request)
+    {
         //check access
         $data['menu_key'] = 'MM_ACCOUNT';
         $data['sub_menu_key'] = 'SM_BUSINESS_REGISTERS';
-        check_access(array($data['menu_key'],$data['sub_menu_key']));
-        
+        check_access(array($data['menu_key'], $data['sub_menu_key']));
+
         return view('business_register.business_registers', $data);
     }
 
     //This is the function that loads the add/edit page
-    public function add_business_register(){
+    public function add_business_register()
+    {
         //check access
         $data['menu_key'] = 'MM_ACCOUNT';
         $data['sub_menu_key'] = 'SM_BUSINESS_REGISTERS';
@@ -47,49 +50,51 @@ class BusinessRegister extends Controller
     }
 
     //This is the function that loads the detail page
-    public function detail($slack){
+    public function detail($slack)
+    {
         $data['menu_key'] = 'MM_ACCOUNT';
         $data['sub_menu_key'] = 'SM_BUSINESS_REGISTERS';
         $data['action_key'] = 'A_DETAIL_BUSINESS_REGISTER';
         check_access([$data['action_key']]);
 
         $business_register = BusinessRegisterModel::where('slack', '=', $slack)->first();
-        
+
         if (empty($business_register)) {
             abort(404);
         }
 
         $business_register_data = new BusinessRegisterResource($business_register);
-        
+
         $data['business_register_data'] = $business_register_data;
 
-        $data['delete_register_access'] = check_access(['A_DELETE_BUSINESS_REGISTER'] ,true);
+        $data['delete_register_access'] = check_access(['A_DELETE_BUSINESS_REGISTER'], true);
 
         $data['print_register_report_link'] = route('print_register_report', ['slack' => $slack]);
 
         return view('business_register.business_register_detail', $data);
     }
 
-    public function get_free_billing_counters(){
+    public function get_free_billing_counters()
+    {
         $available_counters = [];
 
         $billing_counters = BillingCounterModel::select('id', 'billing_counters.slack', 'billing_counter_code', 'counter_name')
-        ->active()
-        ->get();
-
-        foreach($billing_counters as $billing_counter){
-
-            $occupants = BusinessRegisterModel::select('*')
-            ->user()
-            ->where([
-                ['billing_counter_id', '=', $billing_counter->id],
-                ['current_register', '=', 1]
-            ])
-            ->whereNull('closing_date')
+            ->active()
             ->get();
 
+        foreach ($billing_counters as $billing_counter) {
+
+            $occupants = BusinessRegisterModel::select('*')
+                ->user()
+                ->where([
+                    ['billing_counter_id', '=', $billing_counter->id],
+                    ['current_register', '=', 1]
+                ])
+                ->whereNull('closing_date')
+                ->get();
+
             $occupant_data = BusinessRegisterResource::collection($occupants);
-            
+
             $billing_counter['occupant_data'] = $occupant_data;
 
             $available_counters[] = $billing_counter;
@@ -98,37 +103,37 @@ class BusinessRegister extends Controller
         return $available_counters;
     }
 
-    public function print_register_report(Request $request, $slack = '', $type = 'INLINE', $full_path = false){
+    public function print_register_report(Request $request, $slack = '', $type = 'INLINE', $full_path = false)
+    {
         $data['menu_key'] = 'MM_ORDERS';
         $data['sub_menu_key'] = 'SM_POS_ORDERS';
         check_access([$data['sub_menu_key']]);
 
         $business_register_query = BusinessRegisterModel::select('slack')
-        ->when($slack == '', function ($business_register_query) use ($request) {
-            $business_register_query->where('user_id', '=', trim($request->logged_user_id));
-            $business_register_query->whereNull('closing_date');
-        })
-        ->when($slack != '', function ($business_register_query) use ($slack) {
-            $business_register_query->where('slack', '=', trim($slack));
-        });
+            ->when($slack == '', function ($business_register_query) use ($request) {
+                $business_register_query->where('user_id', '=', trim($request->logged_user_id));
+                $business_register_query->whereNull('closing_date');
+            })
+            ->when($slack != '', function ($business_register_query) use ($slack) {
+                $business_register_query->where('slack', '=', trim($slack));
+            });
         $business_register_data = $business_register_query->first();
-        
+
         if (empty($business_register_data)) {
             throw new Exception("You dont have any register open", 400);
         }
 
         $business_register_slack = $business_register_data->slack;
         $business_register_details = $this->business_register_report_data($business_register_slack);
-
         $date = Carbon::now();
         $current_date = $date->format('d-m-Y H:i');
-        $store = $request->logged_user_store_code.'-'.$request->logged_user_store_name;
+        $store = $request->logged_user_store_code . '-' . $request->logged_user_store_name;
         $currency = $request->logged_user_store_currency;
-        
+
         $view_file = 'business_register.report.business_register_report_print';
         $css_file = 'css/business_register_report.css';
         $print_data = view($view_file, ['data' => $business_register_details, 'store' => $store, 'date' => $current_date, 'currency' => $currency])->render();
-       
+
         $mpdf_config = [
             'mode'          => 'utf-8',
             'format'        => 'a4',
@@ -137,7 +142,7 @@ class BusinessRegister extends Controller
             'margin_right'  => 3,
             'margin_top'    => 3,
             'margin_bottom' => 3,
-            'tempDir' => storage_path()."/pdf_temp" 
+            'tempDir' => storage_path() . "/pdf_temp"
         ];
 
         $stylesheet = File::get(public_path($css_file));
@@ -146,11 +151,11 @@ class BusinessRegister extends Controller
         $mpdf->showImageErrors = true;
         $mpdf->WriteHTML($stylesheet, \Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($print_data);
-        $mpdf->SetHTMLFooter('<div class="footer">store: '.$store.' | generated on: '.$current_date.' | page: {PAGENO}/{nb}</div>');
+        $mpdf->SetHTMLFooter('<div class="footer">store: ' . $store . ' | generated on: ' . $current_date . ' | page: {PAGENO}/{nb}</div>');
 
-        $filename = 'register_report_'.$business_register_slack.'_'.date('Y_m_d_h_i_s').'.pdf';
+        $filename = 'register_report_' . $business_register_slack . '_' . date('Y_m_d_h_i_s') . '.pdf';
 
-        $cache_params = '?='.uniqid();
+        $cache_params = '?=' . uniqid();
 
         Storage::disk('register')->delete(
             [
@@ -158,63 +163,64 @@ class BusinessRegister extends Controller
             ]
         );
 
-        if($type == 'INLINE'){
-            $mpdf->Output($filename.$cache_params, \Mpdf\Output\Destination::INLINE);
-        }else{
+        if ($type == 'INLINE') {
+            $mpdf->Output($filename . $cache_params, \Mpdf\Output\Destination::INLINE);
+        } else {
             $view_path = Config::get('constants.upload.register.view_path');
             $upload_dir = Storage::disk('register')->path('');
 
-            $mpdf->Output($upload_dir.$filename, \Mpdf\Output\Destination::FILE);
+            $mpdf->Output($upload_dir . $filename, \Mpdf\Output\Destination::FILE);
 
-            $download_link = ($full_path == false)?$view_path.$filename.$cache_params:$upload_dir.$filename;
-            return $download_link; 
+            $download_link = ($full_path == false) ? $view_path . $filename . $cache_params : $upload_dir . $filename;
+            return $download_link;
         }
     }
 
-    public function business_register_report_data($business_register_slack){
+    public function business_register_report_data($business_register_slack)
+    {
 
         $response = [];
 
         $payment_methods = PaymentMethodModel::select('id', 'label')
-        ->active()
-        ->get();
+            ->active()
+            ->get();
 
         $business_register = BusinessRegisterModel::select('*')
-        ->where('slack', '=', $business_register_slack)
-        ->first();
+            ->where('slack', '=', $business_register_slack)
+            ->first();
 
         $total_closing_amount = 0;
         $total_order_count = 0;
 
         $order_data = [];
-        $payment_method_array= [];
+        $payment_method_array = [];
 
-        if(!empty($business_register)){
-            
+        if (!empty($business_register)) {
+
             $order_data = OrderModel::select(DB::raw('COUNT(id) as order_count, SUM(total_order_amount) as order_value'))
-            ->where('register_id', $business_register->id)
-            ->closed()
-            ->first();
-
-            foreach($payment_methods as $payment_method){
-
-                $payment_method_order_amount = OrderModel::select(DB::raw('COUNT(id) as order_count, SUM(total_order_amount) as order_value'))
-                ->where([
-                    ['payment_method_id', '=', $payment_method->id],
-                ])
                 ->where('register_id', $business_register->id)
                 ->closed()
                 ->first();
 
+            foreach ($payment_methods as $payment_method) {
+
+                $payment_method_order_amount = OrderModel::select(DB::raw('COUNT(id) as order_count, SUM(total_order_amount) as order_value'))
+                    ->where([
+                        ['payment_method_id', '=', $payment_method->id],
+                    ])
+                    ->where('register_id', $business_register->id)
+                    ->closed()
+                    ->first();
+
                 $payment_method_array[] = [
                     'payment_method' => $payment_method['label'],
-                    'value' => ($payment_method_order_amount->order_value)?$payment_method_order_amount->order_value:0.00,
+                    'value' => ($payment_method_order_amount->order_value) ? $payment_method_order_amount->order_value : 0.00,
                     'order_count' => $payment_method_order_amount->order_count
                 ];
             }
 
-            $total_order_count = $total_order_count+$order_data->order_count;
-            $total_closing_amount = $total_closing_amount+$business_register->closing_amount;
+            $total_order_count = $total_order_count + $order_data->order_count;
+            $total_closing_amount = $total_closing_amount + $business_register->closing_amount;
         }
 
         $business_register_resource = new BusinessRegisterResource($business_register);
@@ -223,35 +229,38 @@ class BusinessRegister extends Controller
         $business_register_resource_array['payment_method_data'] = $payment_method_array;
         $business_register_resource_array['order_data'] = $order_data;
 
+        $registerIds = [$business_register->id];
+
         $sub_business_register_data = BusinessRegisterModel::select('*')
-        ->where('parent_register_id', '=', $business_register->id)
-        ->get();
+            ->where('parent_register_id', '=', $business_register->id)
+            ->get();
 
-        if(!empty($sub_business_register_data)){
+        if (!empty($sub_business_register_data)) {
 
-            foreach($sub_business_register_data as $sub_business_register_data_item){
-            
+            foreach ($sub_business_register_data as $sub_business_register_data_item) {
+                $registerIds[] = $sub_business_register_data_item->id;
+
                 $sub_register_order_data = [];
-                $sub_register_payment_method_array= [];
+                $sub_register_payment_method_array = [];
 
                 $order_data = OrderModel::select(DB::raw('COUNT(id) as order_count, SUM(total_order_amount) as order_value'))
-                ->where('register_id', $sub_business_register_data_item->id)
-                ->closed()
-                ->first();
-
-                foreach($payment_methods as $payment_method){
-
-                    $payment_method_order_amount = OrderModel::select(DB::raw('COUNT(id) as order_count, SUM(total_order_amount) as order_value'))
-                    ->where([
-                        ['payment_method_id', '=', $payment_method->id],
-                    ])
                     ->where('register_id', $sub_business_register_data_item->id)
                     ->closed()
                     ->first();
 
+                foreach ($payment_methods as $payment_method) {
+
+                    $payment_method_order_amount = OrderModel::select(DB::raw('COUNT(id) as order_count, SUM(total_order_amount) as order_value'))
+                        ->where([
+                            ['payment_method_id', '=', $payment_method->id],
+                        ])
+                        ->where('register_id', $sub_business_register_data_item->id)
+                        ->closed()
+                        ->first();
+
                     $sub_register_payment_method_array[] = [
                         'payment_method' => $payment_method['label'],
-                        'value' => ($payment_method_order_amount->order_value)?$payment_method_order_amount->order_value:0.00,
+                        'value' => ($payment_method_order_amount->order_value) ? $payment_method_order_amount->order_value : 0.00,
                         'order_count' => $payment_method_order_amount->order_count
                     ];
                 }
@@ -264,30 +273,60 @@ class BusinessRegister extends Controller
 
                 $business_register_resource_array['sub_registers'][] = $sub_business_register_resource_array;
 
-                $total_order_count = $total_order_count+$order_data->order_count;
-                $total_closing_amount = $total_closing_amount+$sub_business_register_data_item->closing_amount;
+                $total_order_count = $total_order_count + $order_data->order_count;
+                $total_closing_amount = $total_closing_amount + $sub_business_register_data_item->closing_amount;
             }
         }
 
+
+        $productWiseTotals = OrderProductModel::select([
+            'order_products.product_id',
+            'order_products.name',
+            DB::raw('SUM(order_products.quantity) as total_quantity'),
+            DB::raw('SUM(order_products.total_amount) as total_amount')
+        ])
+            ->join('orders', 'order_products.order_id', '=', 'orders.id') // Join with the orders table to filter by register ID and order status
+            ->whereIn('orders.register_id', $registerIds) // Filter by register IDs
+            ->where('orders.status', 1) // Filter for closed orders
+            ->groupBy('order_products.product_slack') // Group by product ID and name
+            ->get();
+
+        $categoryWiseTotals = OrderProductModel::select([
+            'products.category_id',
+            'category.label as category_name',
+            DB::raw('SUM(order_products.quantity) as total_quantity'),
+            DB::raw('SUM(order_products.total_amount) as total_amount')
+        ])
+            ->join('orders', 'order_products.order_id', '=', 'orders.id') // Join with the orders table
+            ->join('products', 'order_products.product_id', '=', 'products.id') // Join with the products table
+            ->join('category', 'products.category_id', '=', 'category.id') // Join with the categories table
+            ->whereIn('orders.register_id', $registerIds) // Filter by register IDs
+            ->where('orders.status', 1) // Filter for closed orders
+            ->groupBy('products.category_id') // Group by category ID and name
+            ->get();
+
+
+        $business_register_resource_array['categoryWiseTotals'] = $categoryWiseTotals;
+        $business_register_resource_array['productWiseTotals'] = $productWiseTotals;
         $business_register_resource_array['total_order_count'] = $total_order_count;
         $business_register_resource_array['total_closing_amount'] = $total_closing_amount;
 
         $response = $business_register_resource_array;
-        
         return $response;
     }
 
-    public function register_summary(Request $request, $slack){
+    public function register_summary(Request $request, $slack)
+    {
         $data['menu_key'] = 'MM_ORDERS';
         $data['sub_menu_key'] = 'SM_POS_ORDERS';
         check_access([$data['sub_menu_key']]);
 
         $store_data = StoreModel::select('currency_name', 'currency_code', 'printnode_enabled')
-        ->where([
-            ['stores.id', '=', request()->logged_user_store_id]
-        ])
-        ->active()
-        ->first();
+            ->where([
+                ['stores.id', '=', request()->logged_user_store_id]
+            ])
+            ->active()
+            ->first();
 
         $data['register_data'] = $this->business_register_report_data($slack);
 
@@ -295,9 +334,9 @@ class BusinessRegister extends Controller
 
         $data['new_order_link'] = route('add_order');
 
-        $data['new_order_access'] = check_access(['A_ADD_ORDER'] ,true);
+        $data['new_order_access'] = check_access(['A_ADD_ORDER'], true);
 
-        $data['printnode_enabled'] = (isset($store_data->printnode_enabled) && $store_data->printnode_enabled == 1)?true:false;
+        $data['printnode_enabled'] = (isset($store_data->printnode_enabled) && $store_data->printnode_enabled == 1) ? true : false;
 
         return view('business_register.business_register_summary', $data);
     }

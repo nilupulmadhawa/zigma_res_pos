@@ -124,14 +124,14 @@
               </button>
             </div>
           </div>
-          <div class="form-row d-flex flex-nowrap overflow-auto">
+          <div class="form-row d-flex overflow-auto">
             <div
               class="col-md-2"
               v-for="(category_item, index) in categories"
               v-bind:key="index"
             >
               <input
-                type="checkbox"
+                type="radio"
                 class="check d-none"
                 name="waiter"
                 v-model="category"
@@ -141,6 +141,7 @@
               />
               <label
                 class="check-buttons w-100 text-truncate"
+                style="padding: 10px 5px; font-size: 15px; font-weight: bold"
                 v-bind:for="'category' + index"
                 >{{ category_item.label }}</label
               >
@@ -2063,7 +2064,7 @@ export default {
       customer_label: "-",
       barcode: "",
       product_title: "",
-      category: [],
+      category: "",
 
       order_slack: this.order_data == null ? "" : this.order_data.slack,
       order_number:
@@ -2492,12 +2493,12 @@ export default {
                               "SUCCESS"
                             );
                           } else {
-                             this.show_response_message(
-                                "Printing Failed",
-                                "ERROR",
-                                5000,
-                                "error"
-                                );
+                            this.show_response_message(
+                              "Printing Failed",
+                              "ERROR",
+                              5000,
+                              "error"
+                            );
                           }
                           this.processing = false;
                           if (
@@ -2521,12 +2522,12 @@ export default {
                         }
                       })
                       .catch((error) => {
-                         this.show_response_message(
-                            "Printing Failed",
-                            "ERROR",
-                            5000,
-                            "error"
-                            );
+                        this.show_response_message(
+                          "Printing Failed",
+                          "ERROR",
+                          5000,
+                          "error"
+                        );
                         if (response.data.print_kot == "0") {
                           this.show_response_message(
                             response.data.msg,
@@ -2567,12 +2568,12 @@ export default {
                             "SUCCESS"
                           );
                         } else {
-                           this.show_response_message(
+                          this.show_response_message(
                             "Printing Failed",
                             "ERROR",
                             5000,
                             "error"
-                            );
+                          );
                         }
                         this.processing = false;
                         if (
@@ -2595,12 +2596,12 @@ export default {
                         }
                       })
                       .catch((error) => {
-                         this.show_response_message(
-                            "Printing Failed",
-                            "ERROR",
-                            5000,
-                            "error"
-                            );
+                        this.show_response_message(
+                          "Printing Failed",
+                          "ERROR",
+                          5000,
+                          "error"
+                        );
                         if (
                           typeof response.data.link != "undefined" &&
                           response.data.link != ""
