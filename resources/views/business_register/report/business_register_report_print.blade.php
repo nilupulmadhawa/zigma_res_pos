@@ -16,47 +16,41 @@
             </tr>
         </table>
     </div>
-    <div class='border-bottom-dashed pt-1rem mb-1rem'>
-        <table class='w-100'>
+
+    <div class='mb-2rem'>
+        <table class='w-100 bordered-table'>
             <tr>
-                <td class=' w-50'>Store :{{ $store }}</td>
-                <td class='right'>Billing Counter:
-                    {{ $store }}<br>{{ $data['billing_counter']['billing_counter_code'] }} -
-                    {{ $data['billing_counter']['counter_name'] }}</td>
-            </tr>
-            <tr>
-                <td class=' w-50'> Total Closing Amount ({{ $currency }}) : {{ $data['total_closing_amount'] }}</td>
-                <td class=' right'> Total Order Count ({{ $currency }}) : {{ $data['total_order_count'] }}</td>
+                <td class='w-50  left'>
+                    Store : {{ $store }}
+                </td>
+                <td class='left'>
+                    Billing Counter : {{ $data['billing_counter']['billing_counter_code'] }} <br>
+                    {{ $data['billing_counter']['counter_name'] }}
+                </td>
             </tr>
         </table>
     </div>
 
     <div class='mb-2rem'>
-        <table class='bordered-table'>
+        <table class='w-100 bordered-table'>
             <tr>
-                <th class=' left headers-bg'>
-                    Total Closing Amount ({{ $currency }})
-                </th>
-                <td class=' right'>
-                    {{ $data['total_closing_amount'] }}
+                <td class='w-50 left'>
+                    Total Closing Amount ({{ $currency }}) : {{ $data['total_closing_amount'] }}
                 </td>
-                <th class=' left headers-bg'>
-                    Total Order Count
-                </th>
-                <td class=' right'>
-                    {{ $data['total_order_count'] }}
+                <td class='left'>
+                    Total Order Count :{{ $data['total_order_count'] }}
                 </td>
             </tr>
         </table>
     </div>
 
     <div class=''>
-        <table class='bordered-table'>
+        <table class='w-100 bordered-table'>
             <tr>
-                <td class=' left bold' colspan="2">
+                <td class='w-50 left bold' colspan="2">
                     Opened By
                 </td>
-                <td class='' colspan="2">
+                <td class='w-50' colspan="2">
                     {{ $data['user']['fullname'] }}
                 </td>
             </tr>
@@ -78,7 +72,7 @@
     </div>
 
     <div class='mb-3rem'>
-        <table class='bordered-table'>
+        <table class='w-100 bordered-table'>
             <tr>
                 <th class=''>
 
@@ -174,26 +168,21 @@
 
         @foreach ($data['sub_registers'] as $sub_register)
             <div class=''>
-                <table class='bordered-table'>
+                <table class='w-100 bordered-table'>
                     <tr>
-                        <td class=' left bold' colspan="2">
+                        <td class='w-50 left ' colspan="2">
                             Joined By
                         </td>
-                        <td class='' colspan="2">
+                        <td class='w-50' colspan="2">
                             {{ $sub_register['user']['fullname'] }}
                         </td>
                     </tr>
                     <tr>
-                        <td class='left bold'>
-                            Joined On
+                        <td class='left w-50 left'>
+                            Joined On : {{ $sub_register['opening_date_label'] }}
                         </td>
-                        <td class=''>
-                            {{ $sub_register['opening_date_label'] }}
-                        </td>
-                        <td class='left bold'>
-                            Exited On
-                        </td>
-                        <td class=''>
+                        <td class='left '>
+                            Exited On :
                             {{ $sub_register['closing_date_label'] ? $sub_register['closing_date_label'] : '-' }}
                         </td>
                     </tr>
@@ -201,7 +190,7 @@
             </div>
 
             <div class='mb-3rem'>
-                <table class='bordered-table'>
+                <table class='w-100 bordered-table'>
                     <tr>
                         <th class=''>
 
@@ -285,8 +274,8 @@
             </div>
         @endforeach
     @endif
-    <h4>Details of products sold(By Category)</h4>
-    <table class='bordered-table mb-2rem'>
+    <h2>Details of products sold(By Category)</h2>
+    <table class='w-100 bordered-table mb-2rem'>
         <tr>
             <th class=''>
                 Category Name
@@ -312,8 +301,8 @@
             </tr>
         @endforeach
     </table>
-    <h4>Details of products sold</h4>
-    <table class='bordered-table mb-2rem'>
+    <h2>Details of products sold</h2>
+    <table class='w-100 bordered-table mb-2rem'>
         <tr>
             <th class=''>
                 Product

@@ -485,6 +485,7 @@ class Order extends Controller
                     $request->slack = $slack;
                     $request->print_type = 'KOT';
                     $print_kot = $printer_controller->print_with_printnode($request, true, true);
+                    // dd($print_kot);
                 } catch (Exception $e) {
                     //skip
                     $print_invoice = '0';

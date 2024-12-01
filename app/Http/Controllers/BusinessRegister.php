@@ -132,11 +132,12 @@ class BusinessRegister extends Controller
 
         $view_file = 'business_register.report.business_register_report_print';
         $css_file = 'css/business_register_report.css';
+        $format = [84, 297];
         $print_data = view($view_file, ['data' => $business_register_details, 'store' => $store, 'date' => $current_date, 'currency' => $currency])->render();
 
         $mpdf_config = [
             'mode'          => 'utf-8',
-            'format'        => 'a4',
+            'format'        => $format,
             'orientation'   => 'P',
             'margin_left'   => 3,
             'margin_right'  => 3,
